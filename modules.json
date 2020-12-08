@@ -1,0 +1,9 @@
+{
+    "config": "./config",
+    "logger": "./logger",
+    "storage": "./model/storage",
+    "tresshold": "./model/tresshold",
+    "accum": "./model/accumulator",
+    "ClassA": "./model/class-a",
+    "DerivedA": "./model/derived-a"
+}

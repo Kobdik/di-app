@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" height="350" width="600">
+  <defs>
+    <radialGradient id="grad1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:rgb(255,255,255);stop-opacity:0" />
+      <stop offset="100%" style="stop-color:rgb(0,0,255);stop-opacity:1" />
+    </radialGradient>
+    <radialGradient id="grad2" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:rgb(255,255,255);stop-opacity:0" />
+      <stop offset="100%" style="stop-color:rgb(0,155,155);stop-opacity:1" />
+    </radialGradient>
+    <radialGradient id="grad3" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:rgb(255,255,255);stop-opacity:0" />
+      <stop offset="100%" style="stop-color:rgb(155,155,0);stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  <g>
+    <path d="M 90 270 L 90 70 L 290 170 L 490 120 V 220" fill="transparent" stroke="gray"/>
+  </g>
+  <g transform="translate(50,50)">
+    <ellipse cx="10" cy="20" rx="36" ry="36" fill="url(#grad2)" />
+    <ellipse cx="40" cy="20" rx="36" ry="36" fill="url(#grad2)" />
+    <ellipse cx="70" cy="20" rx="36" ry="36" fill="url(#grad2)" />
+    <text x="0" y="25">accumulators</text>
+  </g>
+  <g transform="translate(50,150)">
+    <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad1)" />
+    <text x="10" y="25">storage</text>
+  </g>
+  <g transform="translate(50,250)">
+    <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad1)" />
+    <text x="10" y="25">tresshold</text>
+  </g>
+  <g transform="translate(450,100)">
+    <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad3)" />
+    <text x="10" y="25">DerivedA</text>
+  </g>
+  <g transform="translate(450,200)">
+    <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad3)" />
+    <text x="10" y="25">ClassA</text>
+  </g>
+  <g transform="translate(250,150)">
+    <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad1)" />
+    <text x="20" y="25">logger</text>
+  </g>
+</svg>
