@@ -9,7 +9,7 @@ module.exports = (logger) => {
             //{ path, expo, inst })
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
             if (mod.inst) return mod.inst;
-            //obtain module.exports service factory
+            logger.info(`Loading factory for ${key} from path: ${mod.path}`);
             if (!mod.expo) load(mod, whom);
             //instantiate direct or with injected dependencies
             if (!mod.expo.deps) mod.inst = mod.expo();
@@ -48,8 +48,8 @@ module.exports = (logger) => {
 
     function load(mod, whom) {
         try {
+            //expose module.exports service factory
             mod.expo = require(mod.path);
-            logger.info(`Path: ${mod.path}`);
             return mod.expo;
         }
         catch (err) {
