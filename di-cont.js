@@ -49,7 +49,7 @@ module.exports = (logger) => {
         },
         each: (cb) => {
             //cb(mod, key, map)
-            map.forEach((mod, key) => cb(mod, key));
+            map.forEach(cb);
         },
     }
 
