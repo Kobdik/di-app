@@ -14,7 +14,6 @@ module.exports = (logger) => {
             //instantiate direct or with injected dependencies
             if (!mod.expo.deps) mod.inst = mod.expo();
             else mod.inst = inject(mod);
-            //dispose when used
             const inst = mod.inst;
             if (mod.detach) mod.inst = null;
             return inst;
@@ -59,7 +58,6 @@ module.exports = (logger) => {
     }
 
     map.set('di', { inst: di });
-    //map.set('logger', { inst: logger });
 
     return di;
 };
