@@ -19,4 +19,3 @@ module.exports = (ClassA, logger) => {
 
 module.exports.sname = "derived A";
 module.exports.deps = ["ClassA", "logger"];
-module.exports.detach = true;
