@@ -29,6 +29,7 @@ module.exports = (logger) => {
             if (mod.swear) mod.resolve(inst);
             if (mod.detach) mod.inst = null;
             logger.info(`Instance of ${key} successfully created`);
+            process.nextTick(logger.info, `Next tick after creating ${key}`)
             return inst;
         },
         detach: (key, value) => {
