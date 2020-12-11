@@ -233,11 +233,11 @@ module.exports.deps = ["ClassA", "logger"];
 
 Отзывчивость сервера тоже повышает производительность. Пока идёт создание отложенных служб, можно одновременно отправлять асинхронные запросы к уже запущенным службам, например, доступа к БД. К тому времени, когда службы запустятся, ответы от БД уже придут.
 
-Если служба имеет своё дерево отложенных зависимостей, то процесс создания экземпляра растянется на несколько циклов событий.
+Если служба имеет своё дерево отложенных зависимостей, то процесс создания экземпляра может растянутся на несколько циклов событий.
 
 Когда происходит несколько конкурентных запросов на создание *singleton* службы, которая имеет отложенные зависимости, велика вероятность создания дубликатов, что в данном случае неприемлемо.
 
-Поэтому, контейнер должен начать исполнение кода создания экземпляра, которое растянется на несколько циклов событий, только для первого обратившегося, а остальным можно отправить один и тот же промис, который разрешится созданным экземпляром.
+Решением является следующий подход. Контейнер начинает исполнение кода *get* по созданию *singleton* экземпляра с зависимостями, только для первого обратившегося, а остальным отправляет один и тот же промис, который разрешится созданным экземпляром.
 
 ## Реализация асинхронного DI-контейнера
 
@@ -325,6 +325,8 @@ module.exports.sname = 'di-container async';
 module.exports.deps = ['logger'];
 ```
 
+В рабочем варианте следует закомментировать все строки с информационным выводом.
+
 ## Пример использования асинхронного DI-контейнера
 
 Имеется три конкурентных запроса на создание отсоединенных экземпляров службы *accum*, у которой имеется неразрешенная зависимость *storage*, а у неё в свою очередь - *tresshold*.
@@ -374,7 +376,7 @@ di.get('DerivedA').then(D => {
 
 Ко второму циклу событий все конечные зависимости уже созданы. Каскадно разрешатся промисы первого цикла, будет создан экземпляр *storage* и разрешится промис на его создание, и будут созданы все три экземпляра *accum*, затем будет выполнена работа с ними.
 
-Вывод программы подтверждает, что был создан единственный экземпляр *storage* при конкурентном обращении от трёх экземпляров *accum*.
+Вывод программы подтверждает, что был создан единственный экземпляр *storage* при конкурентном обращении от трёх экземпляров *accum* и непосредственного запроса службы.
 
 ```log
 info: Loading factory for accum from path: ./model/accumulator
@@ -410,4 +412,76 @@ info: 400 added to 100
 info: Storage limit 500 exceeded by 55 !
 info: Amount is 500
 info: Total amount is 555
+```
+
+## Асинхронная служба, ответ по готовности
+
+Если экземпляр службы в момент создания ещё не готов к работе, то в качестве экземпляра асинхронной службы можно вернуть промис, который разрешится готовым к использованию рабочим экземпляром.
+
+В реальном приложении это может быть соединение с БД или класс mongoose.model для манипулирования документами. Но мы, только ради демонстрации возможности, изменим модуль *derived-a.js* и симулируем задержку готовности экземпляра службы.
+
+``` js
+module.exports = (ClassA, logger) => {
+
+    class DerivedA extends ClassA {
+        constructor(name) {
+            super(name);
+        }
+
+        sum(a, b) {
+            logger.info(`${this.name} calculated ${a} + ${b}`);
+            return a + b;
+        }
+    }
+    //return DerivedA;
+    return new Promise(resolve => setTimeout(resolve, 2000, DerivedA));
+};
+
+module.exports.sname = "derived A";
+module.exports.deps = ["ClassA", "logger"];
+```
+
+Вывод показывает, что с получением экземпляра *DerivedA* происходит задержка, работа производится с готовым к использованию экземпляром.
+
+```log
+info: Loading factory for accum from path: ./model/accumulator
+info: Loading factory for storage from path: ./model/storage
+info: Loading factory for tresshold from path: ./model/tresshold
+info: Instance of tresshold successfully created
+info: Promise singleton creation of storage
+info: Promise singleton creation of storage
+info: Promise singleton creation of storage
+info: Loading factory for DerivedA from path: ./model/derived-a
+info: Loading factory for ClassA from path: ./model/class-a
+info: Instance of ClassA successfully created
+info: Next tick after loading accum
+info: Next tick after loading storage
+info: Next tick after loading tresshold
+info: Next tick after creating tresshold
+info: Next tick after loading DerivedA
+info: Next tick after loading ClassA
+info: Next tick after creating ClassA
+info: Instance of storage successfully created
+info: Instance of accum successfully created
+info: Instance of accum successfully created
+info: Instance of accum successfully created
+info: 1 added to 0
+info: 4 added to 1
+info: Amount is 5
+info: 10 added to 0
+info: 40 added to 10
+info: Amount is 50
+info: 100 added to 0
+info: 400 added to 100
+info: Storage limit 500 exceeded by 55 !
+info: Amount is 500
+info: Total amount is 555
+info: Next tick after creating storage
+info: Next tick after creating accum
+info: Next tick after creating accum
+info: Next tick after creating accum
+info: Instance of DerivedA successfully created
+info: Den calculated 8 + 2
+info: 10
+info: Next tick after creating DerivedA
 ```
