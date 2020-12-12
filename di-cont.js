@@ -1,5 +1,5 @@
 
-module.exports = (logger) => {
+module.exports = ({info}) => {
 
     const map = new Map();
 
@@ -10,16 +10,16 @@ module.exports = (logger) => {
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
             if (mod.inst) return mod.inst;
             if (mod.expo && !mod.detach) {
-                logger.info(`Promise singleton creation of ${key}`);
+                info(`Promise singleton creation of ${key}`);
                 if (!mod.swear)
                     mod.swear = new Promise(resolve => mod.resolve = resolve);
                 return mod.swear;
             }
             //obtain module.exports service factory
             if (!mod.expo) {
-                logger.info(`Loading factory for ${key} from path: ${mod.path}`);
+                info(`Loading factory for ${key} from path: ${mod.path}`);
                 load(mod, whom);
-                process.nextTick(logger.info, `Next tick after loading ${key}`)
+                process.nextTick(info, `Next tick after loading ${key}`)
             }
             //instantiate direct or with injected dependencies
             if (!mod.expo.deps) mod.inst = mod.expo();
@@ -28,8 +28,8 @@ module.exports = (logger) => {
             const inst = mod.inst;
             if (mod.swear) mod.resolve(inst);
             if (mod.detach) mod.inst = null;
-            logger.info(`Instance of ${key} successfully created`);
-            process.nextTick(logger.info, `Next tick after creating ${key}`)
+            info(`Instance of ${key} successfully created`);
+            process.nextTick(info, `Next tick after creating ${key}`)
             return inst;
         },
         detach: (key, value) => {
@@ -38,10 +38,8 @@ module.exports = (logger) => {
             mod.detach = value;
         },
         set: (key, mod) => {
-            if (!mod.inst && !mod.path)
-                logger.error(`Entry for ${key} not set !!`);
-            else
-                map.set(key, mod);
+            if (mod.inst || mod.path) map.set(key, mod);
+            else throw new Error(`Entry for ${key} not set !!`);
         },
         add: (modules) => {
             //map each key to appropriate path

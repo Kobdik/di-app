@@ -15,9 +15,9 @@
 
 + [Шаблон определения модулей Dependency Injection](#Dependency-Injection)
 + [Контейнер внедрения зависимостей](#Dependency-Injection-Container)
++ [Реализация наследования классов](#Реализация-наследования-классов)
 + [Реализация синхронного DI-контейнера](#Реализация-синхронного-DI-контейнера)
 + [Пример использования синхронного DI-контейнера](#Использование-синхронного-DI-контейнера)
-+ [Реализация наследования классов](#Реализация-наследования-классов)
 + [Отложенная асинхронная загрузка служб](#Отложенная-асинхронная-загрузка-служб)
 + [Реализация асинхронного DI-контейнера](#Реализация-асинхронного-DI-контейнера)
 + [Пример использования асинхронного DI-контейнера](#Использование-асинхронного-DI-контейнера)
@@ -48,10 +48,54 @@ module.exports.deps = ["storage", "logger"];
 
 Реализация DI-контейнера соответствует шаблону **Dependency Injection**, чтобы другие службы могли его внедрить. Такая возможность позволяет отложить загрузку отдельных зависимостей, используя внедренный контейнер в качестве локатора служб.
 
+## Реализация наследования классов
+
+Пусть служба *ClassA* возвращает определение класса:
+
+``` js
+module.exports = () => {
+
+    class ClassA {
+        constructor(name) {
+            this._name = name;
+        }
+
+        get name() {
+            return this._name;
+        }
+    }
+    return ClassA;
+};
+
+module.exports.sname = "class A";
+```
+
+Фабричная функция возвращает определение класса, давая свободу от зависимостей конструктору. В таком случае, наследуемый класс можно передать фабрике как зависимость.
+
+``` js
+module.exports = (ClassA, logger) => {
+
+    class DerivedA extends ClassA {
+        constructor(name) {
+            super(name);
+        }
+
+        sum(a, b) {
+            logger.info(`${this.name} calculated ${a} + ${b}`);
+            return a + b;
+        }
+    }
+    return DerivedA;
+};
+
+module.exports.sname = "derived A";
+module.exports.deps = ["ClassA", "logger"];
+```
+
 ## Реализация синхронного DI-контейнера
 
 ``` js
-module.exports = (logger) => {
+module.exports = ({info}) => {
 
     const map = new Map();
 
@@ -61,13 +105,14 @@ module.exports = (logger) => {
             //{ path, expo, inst })
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
             if (mod.inst) return mod.inst;
-            logger.info(`Loading factory for ${key} from path: ${mod.path}`);
+            info(`Loading factory for ${key} from path: ${mod.path}`);
             if (!mod.expo) load(mod, whom);
             //instantiate direct or with injected dependencies
             if (!mod.expo.deps) mod.inst = mod.expo();
             else mod.inst = inject(mod);
             const inst = mod.inst;
             if (mod.detach) mod.inst = null;
+            info(`Instance of ${key} successfully created`);
             return inst;
         },
         detach: (key, value) => {
@@ -76,10 +121,8 @@ module.exports = (logger) => {
             mod.detach = value;
         },
         set: (key, mod) => {
-            if (!mod.inst && !mod.expo && !mod.path)
-                logger.error(`Entry for ${key} not set !!`);
-            else
-                map.set(key, mod);
+            if (mod.inst || mod.path) map.set(key, mod);
+            else throw new Error(`Entry for ${key} not set !!`);
         },
         add: (modules) => {
             //map each key to appropriate path
@@ -144,9 +187,8 @@ module.exports.deps = ['logger'];
 
 ## Использование синхронного DI-контейнера
 
-``` js
-const logger = { info: console.log, error: console.error }
-//const logger = require('./logger')();
+```js
+const logger = console;
 const di = require('./di-cont-sync')(logger);
 di.add(require('./modules.json'));
 
@@ -172,6 +214,11 @@ try {
     const s = di.get('storage');
     logger.info('Total amount is %d', s.tot)
     //Total amount is 555
+    const D = di.get('DerivedA');
+    const d = new D('Den');
+    logger.info(d.sum(8, 2));
+    //Den calculated 8 + 2
+    //10
 }
 catch (err) {
     logger.error(`Catch: ${err}`);
@@ -192,48 +239,34 @@ const di = require('./di-cont-sync')(logger);
 di.set('logger', { inst: logger });
 ```
 
-## Реализация наследования классов
+Вывод программы подтверждает, что был создан единственный экземпляр *storage* при последовательном создании трёх экземпляров *accum* и непосредственном запроса службы.
 
-Пусть служба *ClassA* возвращает определение класса:
-
-``` js
-module.exports = () => {
-
-    class ClassA {
-        constructor(name) {
-            this._name = name;
-        }
-
-        get name() {
-            return this._name;
-        }
-    }
-    return ClassA;
-};
-
-module.exports.sname = "class A";
-```
-
-Фабричная функция возвращает определение класса, давая свободу от зависимостей конструктору. В таком случае, наследуемый класс можно передать фабрике как зависимость.
-
-``` js
-module.exports = (ClassA, logger) => {
-
-    class DerivedA extends ClassA {
-        constructor(name) {
-            super(name);
-        }
-
-        sum(a, b) {
-            logger.info(`${this.name} calculated ${a} + ${b}`);
-            return a + b;
-        }
-    }
-    return DerivedA;
-};
-
-module.exports.sname = "derived A";
-module.exports.deps = ["ClassA", "logger"];
+```log
+info: Loading factory for accum from path: ./model/accumulator
+info: Loading factory for storage from path: ./model/storage
+info: Loading factory for tresshold from path: ./model/tresshold
+info: Instance of tresshold successfully created
+info: Instance of storage successfully created
+info: Instance of accum successfully created
+info: 1 added to 0
+info: 4 added to 1
+info: Amount is 5
+info: Instance of accum successfully created
+info: 10 added to 0
+info: 40 added to 10
+info: Amount is 50
+info: Instance of accum successfully created
+info: 100 added to 0
+info: 400 added to 100
+info: Storage limit 500 exceeded by 55 !
+info: Amount is 500
+info: Total amount is 555
+info: Loading factory for DerivedA from path: ./model/derived-a
+info: Loading factory for ClassA from path: ./model/class-a
+info: Instance of ClassA successfully created
+info: Instance of DerivedA successfully created
+info: Den calculated 8 + 2
+info: 10
 ```
 
 ## Отложенная асинхронная загрузка служб
@@ -253,8 +286,8 @@ module.exports.deps = ["ClassA", "logger"];
 
 ## Реализация асинхронного DI-контейнера
 
-``` js
-module.exports = (logger) => {
+```js
+module.exports = ({info}) => {
 
     const map = new Map();
 
@@ -265,16 +298,16 @@ module.exports = (logger) => {
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
             if (mod.inst) return mod.inst;
             if (mod.expo && !mod.detach) {
-                logger.info(`Promise singleton creation of ${key}`);
+                info(`Promise singleton creation of ${key}`);
                 if (!mod.swear)
                     mod.swear = new Promise(resolve => mod.resolve = resolve);
                 return mod.swear;
             }
             //obtain service factory
             if (!mod.expo) {
-                logger.info(`Loading factory for ${key} from path: ${mod.path}`);
+                info(`Loading factory for ${key} from path: ${mod.path}`);
                 load(mod, whom);
-                process.nextTick(logger.info, `Next tick after loading ${key}`)
+                process.nextTick(info, `Next tick after loading ${key}`)
             }
             //instantiate direct or with injected dependencies
             if (!mod.expo.deps) mod.inst = mod.expo();
@@ -283,8 +316,8 @@ module.exports = (logger) => {
             const inst = mod.inst;
             if (mod.swear) mod.resolve(inst);
             if (mod.detach) mod.inst = null;
-            logger.info(`Instance of ${key} successfully created`);
-            process.nextTick(logger.info, `Next tick after creating ${key}`)
+            info(`Instance of ${key} successfully created`);
+            process.nextTick(info, `Next tick after creating ${key}`)
             return inst;
         },
         detach: (key, value) => {
@@ -294,7 +327,7 @@ module.exports = (logger) => {
         },
         set: (key, mod) => {
             if (!mod.inst && !mod.path)
-                logger.error(`Entry for ${key} not set !!`);
+                throw new Error(`Entry for ${key} not set !!`);
             else
                 map.set(key, mod);
         },
@@ -347,6 +380,7 @@ module.exports.deps = ['logger'];
 const logger = require('./logger')();
 const di = require('./di-cont')(logger);
 di.add(require('./modules.json'));
+
 di.set('logger', { inst:logger });
 di.detach('accum', true);
 

@@ -1,5 +1,5 @@
 
-module.exports = (logger) => {
+module.exports = ({info}) => {
 
     const map = new Map();
 
@@ -9,13 +9,16 @@ module.exports = (logger) => {
             //{ path, expo, inst })
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
             if (mod.inst) return mod.inst;
-            logger.info(`Loading factory for ${key} from path: ${mod.path}`);
-            if (!mod.expo) load(mod, whom);
+            if (!mod.expo) {
+                info(`Loading factory for ${key} from path: ${mod.path}`);
+                load(mod, whom);
+            }
             //instantiate direct or with injected dependencies
             if (!mod.expo.deps) mod.inst = mod.expo();
             else mod.inst = inject(mod);
             const inst = mod.inst;
             if (mod.detach) mod.inst = null;
+            info(`Instance of ${key} successfully created`);
             return inst;
         },
         detach: (key, value) => {
@@ -24,10 +27,8 @@ module.exports = (logger) => {
             mod.detach = value;
         },
         set: (key, mod) => {
-            if (!mod.inst && !mod.expo && !mod.path)
-                logger.error(`Entry for ${key} not set !!`);
-            else
-                map.set(key, mod);
+            if (mod.inst || mod.path) map.set(key, mod);
+            else throw new Error(`Entry for ${key} not set !!`); 
         },
         add: (modules) => {
             //map each key to appropriate path
@@ -62,5 +63,5 @@ module.exports = (logger) => {
     return di;
 };
 
-module.exports.sname = 'di container';
+module.exports.sname = 'di cont-sync';
 module.exports.deps = ['logger'];

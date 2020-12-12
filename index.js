@@ -1,8 +1,8 @@
-//const logger = { info: console.log, error: console.error }
-const logger = require('./logger')();
+const logger = console;
+//const logger = require('./logger')();
 const di = require('./di-cont')(logger);
 di.add(require('./modules.json'));
-di.set('logger', { inst:logger });
+//di.set('logger', { inst:logger });
 /*
 const run = async () => {
 

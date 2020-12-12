@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "DIContainer"
+    "DI-Container", "Lazy-loading"
   ],
   "author": "Kobdikov Tulegen",
   "license": "MIT",
