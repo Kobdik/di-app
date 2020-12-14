@@ -14,7 +14,7 @@
     </radialGradient>
   </defs>
   <g>
-    <path d="M 90 270 L 90 70 L 290 170 L 490 120 V 220" fill="transparent" stroke="gray"/>
+    <path d="M 90 270 L 90 70 L 290 270 L 490 170 V 70" fill="transparent" stroke="gray"/>
   </g>
   <g transform="translate(50,50)">
     <ellipse cx="10" cy="20" rx="36" ry="36" fill="url(#grad2)" />
@@ -30,15 +30,15 @@
     <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad1)" />
     <text x="10" y="25">tresshold</text>
   </g>
-  <g transform="translate(450,100)">
+  <g transform="translate(450,50)">
     <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad3)" />
     <text x="10" y="25">DerivedA</text>
   </g>
-  <g transform="translate(450,200)">
+  <g transform="translate(450,150)">
     <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad3)" />
     <text x="10" y="25">ClassA</text>
   </g>
-  <g transform="translate(250,150)">
+  <g transform="translate(250,250)">
     <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad1)" />
     <text x="20" y="25">logger</text>
   </g>
