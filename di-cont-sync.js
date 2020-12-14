@@ -10,7 +10,7 @@ module.exports = ({info}) => {
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
             if (mod.inst) return mod.inst;
             if (!mod.expo) {
-                info(`Loading factory for ${key} from path: ${mod.path}`);
+                //info(`Loading factory for ${key} from path: ${mod.path}`);
                 load(mod, whom);
             }
             //instantiate direct or with injected dependencies
@@ -18,7 +18,7 @@ module.exports = ({info}) => {
             else mod.inst = inject(mod);
             const inst = mod.inst;
             if (mod.detach) mod.inst = null;
-            info(`Instance of ${key} successfully created`);
+            //info(`Instance of ${key} successfully created`);
             return inst;
         },
         detach: (key, value) => {

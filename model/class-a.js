@@ -1,10 +1,11 @@
 
-module.exports = () => {
+module.exports = (logger) => {
 
     class ClassA {
 
         constructor(name) {
             this._name = name;
+            logger.info(`${this.name} saccessfully created`);
         }
 
         get name() {
@@ -17,3 +18,4 @@ module.exports = () => {
 };
 
 module.exports.sname = "class A";
+module.exports.deps = ["logger"];

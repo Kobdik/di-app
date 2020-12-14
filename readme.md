@@ -25,7 +25,9 @@
 
 ## Dependency Injection
 
-Шаблон **Dependency Injection** основывается на предоставлении модулю всех зависимостей в качестве входных данных фабричной функции. Так ослабляются связи между модулями, позволяя настроить использование любых зависимостей, следовательно, повторно использовать код в различных контекстах.
+Шаблон **Dependency Injection** основывается на предоставлении модулю всех зависимостей в качестве входных данных. Так ослабляются связи между модулями, позволяя настроить использование любых зависимостей, следовательно, повторно использовать код в различных контекстах.
+
+Наиболее удобным и достаточным способом передачи зависимостей является использование фабричной функции.
 
 ``` js
 //фабричная функция службы accumulator
@@ -40,24 +42,17 @@ module.exports.deps = ["storage", "logger"];
 
 Согласитесь, это необременительные требования к определению модулей. Важно соблюсти порядок следования зависимостей в фабричной функции и имен зависимостей в свойстве *deps*.
 
-## Dependency Injection Container
-
-Ответсвенность за создание экземпляров и дальнейший жизненный цикл, поиск и внедрение зависимостей, лежит на объекте, называемом **Dependency Injection Container** или DI-контейнер.
-
-Экземпляры служб и весь граф зависимостей создаются в *ленивом* режиме (**Lazy loading**) без необходимости предварительной загрузки модулей.
-
-Реализация DI-контейнера соответствует шаблону **Dependency Injection**, чтобы другие службы могли его внедрить. Такая возможность позволяет отложить загрузку отдельных зависимостей, используя внедренный контейнер в качестве локатора служб.
-
 ## Реализация наследования классов
 
-Пусть служба *ClassA* возвращает определение класса:
+Пусть служба *ClassA* имеет одну зависимость и возвращает определение класса:
 
 ``` js
-module.exports = () => {
+module.exports = (logger) => {
 
     class ClassA {
         constructor(name) {
             this._name = name;
+            logger.info(`${this.name} saccessfully created`);
         }
 
         get name() {
@@ -68,12 +63,13 @@ module.exports = () => {
 };
 
 module.exports.sname = "class A";
+module.exports.deps = ["logger"];
 ```
 
-Фабричная функция возвращает определение класса, давая свободу от зависимостей конструктору. В таком случае, наследуемый класс можно передать фабрике как зависимость.
+Фабричная функция, возвращающая определение класса, **даёт свободу от зависимостей конструктору**. В таком случае, наследуемый класс можно передать фабрике как зависимость.
 
 ``` js
-module.exports = (ClassA, logger) => {
+module.exports = (ClassA) => {
 
     class DerivedA extends ClassA {
         constructor(name) {
@@ -81,7 +77,6 @@ module.exports = (ClassA, logger) => {
         }
 
         sum(a, b) {
-            logger.info(`${this.name} calculated ${a} + ${b}`);
             return a + b;
         }
     }
@@ -89,8 +84,18 @@ module.exports = (ClassA, logger) => {
 };
 
 module.exports.sname = "derived A";
-module.exports.deps = ["ClassA", "logger"];
+module.exports.deps = ["ClassA"];
 ```
+
+Использование конструктора для внедрения зависимостей, вместо фабричной функции, добавляет необходимость регистрации аргументов конструктора как зависимостей от служб. Порой, это выглядит неоправданным, надуманным, когда в качестве службы приходится регистрировать константы. В JavaScript без этого вполне можно обойтись.
+
+## Dependency Injection Container
+
+Ответсвенность за создание экземпляров и дальнейший жизненный цикл, поиск и внедрение зависимостей, лежит на объекте, называемом **Dependency Injection Container** или DI-контейнер.
+
+Экземпляры служб и весь граф зависимостей создаются в *ленивом* режиме (**Lazy loading**) без необходимости предварительной загрузки модулей.
+
+Реализация DI-контейнера соответствует шаблону **Dependency Injection**, чтобы другие службы могли его внедрить. Такая возможность позволяет отложить загрузку отдельных зависимостей, используя внедренный контейнер в качестве локатора служб.
 
 ## Реализация синхронного DI-контейнера
 
@@ -100,7 +105,7 @@ module.exports = ({info}) => {
     const map = new Map();
 
     const di = {
-        get: (key, whom='di') => {
+        getSync: (key, whom='di') => {
             const mod = map.get(key);
             //{ path, expo, inst })
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
@@ -109,10 +114,10 @@ module.exports = ({info}) => {
             if (!mod.expo) load(mod, whom);
             //instantiate direct or with injected dependencies
             if (!mod.expo.deps) mod.inst = mod.expo();
-            else mod.inst = inject(mod);
+            else mod.inst = injectSync(mod);
             const inst = mod.inst;
             if (mod.detach) mod.inst = null;
-            info(`Instance of ${key} successfully created`);
+            info(`Instance of ${key} successfully created (sync)`);
             return inst;
         },
         detach: (key, value) => {
@@ -135,9 +140,9 @@ module.exports = ({info}) => {
         },
     }
 
-    function inject(mod) {
+    function injectSync(mod) {
         const expo = mod.expo;
-        const args = expo.deps.map(dep => di.get(dep, expo.sname));
+        const args = expo.deps.map(dep => di.getSync(dep, expo.sname));
         return expo.apply(null, args);
     }
 
@@ -157,7 +162,7 @@ module.exports = ({info}) => {
     return di;
 };
 
-module.exports.sname = 'di container sync';
+module.exports.sname = 'di container';
 module.exports.deps = ['logger'];
 ```
 
@@ -175,49 +180,48 @@ module.exports.deps = ['logger'];
 }
 ```
 
-Регистрация служб носит отложенный характер, никакие модули не загружаются. Всё волшебство происходит в момент обращения за экземпляром службы с помощью метода *get*.
+Регистрация служб носит отложенный характер, никакие модули не загружаются. Всё волшебство происходит в момент обращения за экземпляром службы с помощью метода *getAsync*.
 
 Если ключ <имя службы> найден, но экземпляр не создан, проверяется загружена ли фабрика, если нет, то она загружается функцией *load*.
 
-Если у службы нет зависимостей, то для создания экземпляра вызывается фабрика без аргументов. Иначе, вызывается функция *inject*, которая заполняет массив аргументов, рекурсивно запрашивая зависимости у контейнера, затем вызывает фабрику, передавая ей этот массив.
+Если у службы нет зависимостей, то для создания экземпляра вызывается фабрика без аргументов. Иначе, вызывается функция *injectAsync*, которая заполняет массив аргументов, рекурсивно запрашивая зависимости у контейнера, затем вызывает фабрику, передавая ей этот массив.
 
 По умолчанию, возвращается *singlton* объект - служба, указатель на которую сохраняется в контейнере и возвращается при последующих запросах.
 
-Метод *detach* DI-контейнера помечает службу как отсоединенную *detached*. Запрос отсоединенной службы методом *get* возвращает новый экземпляр, не связанный с временем жизни контейнера.
+Метод *detach* DI-контейнера помечает службу как отсоединенную, или как принято называть *transient*. Запрос отсоединенной службы методом *getAsync* каждый раз возвращает новый экземпляр, не связанный с временем жизни контейнера.
 
 ## Использование синхронного DI-контейнера
 
 ```js
 const logger = console;
-const di = require('./di-cont-sync')(logger);
+const di = require('./di-cont')(logger);
 di.add(require('./modules.json'));
 
 try {
     //detached, not singleton
     di.detach('accum', true);
     //but depends of singleton storage
-    const a1 = di.get('accum');
+    const a1 = di.getAsync('accum');
     a1.add(1);
     a1.add(4);
     logger.info('Amount is %d', a1.tot);
     //Amount is 5
-    const a2 = di.get('accum');
+    const a2 = di.getAsync('accum');
     a2.add(10);
     a2.add(40);
     logger.info('Amount is %d', a2.tot);
     //Amount is 50
-    const a3 = di.get('accum');
+    const a3 = di.getAsync('accum');
     a3.add(100);
     a3.add(400);
     logger.info('Amount is %d', a3.tot);
     //Amount is 500
-    const s = di.get('storage');
+    const s = di.getAsync('storage');
     logger.info('Total amount is %d', s.tot)
     //Total amount is 555
-    const D = di.get('DerivedA');
+    const D = di.getAsync('DerivedA');
     const d = new D('Den');
     logger.info(d.sum(8, 2));
-    //Den calculated 8 + 2
     //10
 }
 catch (err) {
@@ -235,7 +239,7 @@ DI-контейнер зависит от службы *logger*, чтобы от
 
 ``` js
 const logger = require('./logger')();
-const di = require('./di-cont-sync')(logger);
+const di = require('./di-cont')(logger);
 di.set('logger', { inst: logger });
 ```
 
@@ -245,17 +249,17 @@ di.set('logger', { inst: logger });
 info: Loading factory for accum from path: ./model/accumulator
 info: Loading factory for storage from path: ./model/storage
 info: Loading factory for tresshold from path: ./model/tresshold
-info: Instance of tresshold successfully created
-info: Instance of storage successfully created
-info: Instance of accum successfully created
+info: Instance of tresshold successfully created (sync)
+info: Instance of storage successfully created (sync)
+info: Instance of accum successfully created (sync)
 info: 1 added to 0
 info: 4 added to 1
 info: Amount is 5
-info: Instance of accum successfully created
+info: Instance of accum successfully created (sync)
 info: 10 added to 0
 info: 40 added to 10
 info: Amount is 50
-info: Instance of accum successfully created
+info: Instance of accum successfully created (sync)
 info: 100 added to 0
 info: 400 added to 100
 info: Storage limit 500 exceeded by 55 !
@@ -263,9 +267,9 @@ info: Amount is 500
 info: Total amount is 555
 info: Loading factory for DerivedA from path: ./model/derived-a
 info: Loading factory for ClassA from path: ./model/class-a
-info: Instance of ClassA successfully created
-info: Instance of DerivedA successfully created
-info: Den calculated 8 + 2
+info: Instance of ClassA successfully created (sync)
+info: Instance of DerivedA successfully created (sync)
+info: Den saccessfully created
 info: 10
 ```
 
@@ -276,7 +280,7 @@ info: 10
 + Во-первых, позволит приложению запускаться быстро, с минимальным количеством служб
 + Во-вторых, загружая службу и её зависимости асинхронно, сервер останется отзывчивым
 
-Отзывчивость сервера тоже повышает производительность. Пока идёт создание отложенных служб, можно одновременно отправлять асинхронные запросы к уже запущенным службам, например, доступа к БД. К тому времени, когда службы запустятся, ответы от БД уже придут.
+Отзывчивость сервера также влияет на производительность. Пока идёт создание отложенных служб, можно одновременно отвечать на запросы к уже запущенным службам, например, доступа к БД. Пока службы запустятся, ответы от БД, возможно, уже поступят.
 
 Если служба имеет своё дерево отложенных зависимостей, то процесс создания экземпляра может растянутся на несколько циклов событий.
 
@@ -285,6 +289,8 @@ info: 10
 Решением является следующий подход. Контейнер начинает исполнение кода *get* по созданию *singleton* экземпляра с зависимостями, только для первого обратившегося, а остальным отправляет один и тот же промис, который разрешится созданным экземпляром.
 
 ## Реализация асинхронного DI-контейнера
+
+В реализацию контейнера добавлен асинхронный метод *get*, который в свою очередь вызывает асинхронную функцию *inject*.
 
 ```js
 module.exports = ({info}) => {
@@ -320,26 +326,11 @@ module.exports = ({info}) => {
             process.nextTick(info, `Next tick after creating ${key}`)
             return inst;
         },
-        detach: (key, value) => {
-            const mod = map.get(key);
-            if (!mod) throw new Error(`Can't find ${key} entry for detaching !!`);
-            mod.detach = value;
-        },
-        set: (key, mod) => {
-            if (!mod.inst && !mod.path)
-                throw new Error(`Entry for ${key} not set !!`);
-            else
-                map.set(key, mod);
-        },
-        add: (modules) => {
-            //map each key to appropriate path
-            for (const key in modules) 
-                map.set(key, { path: modules[key], detach: false });
-        },
-        each: (cb) => {
-            //cb(mod, key, map)
-            map.forEach(cb);
-        },
+        getSync: (key, whom='di') => { /*без изменений*/ },
+        detach: (key, value) => { /*без изменений*/ },
+        set: (key, mod) => { /*без изменений*/ },
+        add: (modules) => { /*без изменений*/ },
+        each: (cb) => { /*без изменений*/ },
     }
 
     async function inject(mod) {
@@ -350,27 +341,18 @@ module.exports = ({info}) => {
         return expo.apply(null, args);
     }
 
-    function load(mod, whom) {
-        try {
-            //expose service factory
-            mod.expo = require(mod.path);
-            return mod.expo;
-        }
-        catch (err) {
-            throw new Error(`Can't load module from path: ${mod.path} for ${whom}!!`);
-        };
-    }
+    function load(mod, whom) { /*без изменений*/ }
 
     map.set('di', { inst: di });
 
     return di;
 };
 
-module.exports.sname = 'di-container async';
+module.exports.sname = 'di-container';
 module.exports.deps = ['logger'];
 ```
 
-В рабочем варианте следует закомментировать все строки с информационным выводом.
+В рабочем варианте следует закомментировать все строки с информационным выводом и убрать зависимость от логгера.
 
 ## Использование асинхронного DI-контейнера
 
@@ -434,86 +416,23 @@ info: Promise singleton creation of storage
 info: Promise singleton creation of storage
 info: Loading factory for DerivedA from path: ./model/derived-a
 info: Loading factory for ClassA from path: ./model/class-a
-info: Instance of ClassA successfully created
-info: Next tick after loading accum
-info: Next tick after loading storage
-info: Next tick after loading tresshold
-info: Next tick after loading DerivedA
-info: Next tick after loading ClassA
-info: Instance of storage successfully created
-info: Instance of DerivedA successfully created
-info: Den calculated 8 + 2
-info: 10
-info: Instance of accum successfully created
-info: Instance of accum successfully created
-info: Instance of accum successfully created
-info: 1 added to 0
-info: 4 added to 1
-info: Amount is 5
-info: 10 added to 0
-info: 40 added to 10
-info: Amount is 50
-info: 100 added to 0
-info: 400 added to 100
-info: Storage limit 500 exceeded by 55 !
-info: Amount is 500
-info: Total amount is 555
-```
-
-## Асинхронная служба
-
-Если экземпляр службы в момент создания ещё не готов к работе, например, нуждается в дополнительной подгрузке данных, то в качестве экземпляра асинхронной службы можно вернуть промис, который разрешится готовым к использованию рабочим экземпляром.
-
-Только ради демонстрации возможности, изменим модуль *derived-a.js* и симулируем задержку готовности экземпляра службы.
-
-``` js
-module.exports = (ClassA, logger) => {
-
-    class DerivedA extends ClassA {
-        constructor(name) {
-            super(name);
-        }
-
-        sum(a, b) {
-            logger.info(`${this.name} calculated ${a} + ${b}`);
-            return a + b;
-        }
-    }
-    //return DerivedA;
-    return new Promise(resolve => setTimeout(resolve, 2000, DerivedA));
-};
-
-module.exports.sname = "derived A";
-module.exports.deps = ["ClassA", "logger"];
-```
-
-Вывод показывает, что с получением экземпляра *DerivedA* происходит задержка, работа производится с "готовым к использованию" экземпляром.
-
-```log
-info: Loading factory for accum from path: ./model/accumulator
-info: Loading factory for storage from path: ./model/storage
-info: Loading factory for tresshold from path: ./model/tresshold
-info: Instance of tresshold successfully created
-info: Promise singleton creation of storage
-info: Promise singleton creation of storage
-info: Promise singleton creation of storage
-info: Loading factory for DerivedA from path: ./model/derived-a
-info: Loading factory for ClassA from path: ./model/class-a
-info: Instance of ClassA successfully created
 info: Next tick after loading accum
 info: Next tick after loading storage
 info: Next tick after loading tresshold
 info: Next tick after creating tresshold
 info: Next tick after loading DerivedA
 info: Next tick after loading ClassA
-info: Next tick after creating ClassA
 info: Instance of storage successfully created
+info: Instance of ClassA successfully created
 info: Instance of accum successfully created
+info: Instance of DerivedA successfully created
 info: Instance of accum successfully created
 info: Instance of accum successfully created
 info: 1 added to 0
 info: 4 added to 1
 info: Amount is 5
+info: Den saccessfully created
+info: 10
 info: 10 added to 0
 info: 40 added to 10
 info: Amount is 50
@@ -523,13 +442,55 @@ info: Storage limit 500 exceeded by 55 !
 info: Amount is 500
 info: Total amount is 555
 info: Next tick after creating storage
+info: Next tick after creating ClassA
+info: Next tick after creating accum
+info: Next tick after creating DerivedA
+info: Next tick after creating accum
+info: Next tick after creating accum
+```
+
+Вывод программы показывает, что запуск службы *DerivedA* осуществился раньше *accum*.
+
+## Асинхронная служба
+
+Если экземпляр службы в момент создания ещё не готов к работе, например, нуждается в дополнительной подгрузке данных, то в качестве экземпляра асинхронной службы можно вернуть промис, который разрешится готовым к использованию рабочим экземпляром.
+
+Только ради демонстрации возможности, изменим модуль *derived-a.js* и симулируем задержку готовности экземпляра службы *DerivedA*.
+
+``` js
+module.exports = (ClassA) => {
+
+    class DerivedA extends ClassA {
+        constructor(name) {
+            super(name);
+        }
+
+        sum(a, b) {
+            return a + b;
+        }
+    }
+    //return DerivedA;
+    return new Promise(resolve => setTimeout(resolve, 2000, DerivedA));
+};
+
+module.exports.sname = "derived A";
+module.exports.deps = ["ClassA"];
+```
+
+Вывод показывает, что с получением экземпляра *DerivedA* происходит задержка на 2 сек, работа производится с "готовым к использованию" экземпляром.
+
+```log
+.........................
+info: Total amount is 555
+info: Next tick after creating storage
+info: Next tick after creating ClassA
 info: Next tick after creating accum
 info: Next tick after creating accum
 info: Next tick after creating accum
 info: Instance of DerivedA successfully created
-info: Den calculated 8 + 2
+info: Den saccessfully created
 info: 10
 info: Next tick after creating DerivedA
 ```
 
-+ [Вернуться в начало](#Содержание)
++ [Вернуться в начало к содержанию](#Содержание)

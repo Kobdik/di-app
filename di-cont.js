@@ -32,6 +32,23 @@ module.exports = ({info}) => {
             process.nextTick(info, `Next tick after creating ${key}`)
             return inst;
         },
+        getSync: (key, whom='di') => {
+            const mod = map.get(key);
+            //{ path, expo, inst })
+            if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
+            if (mod.inst) return mod.inst;
+            if (!mod.expo) {
+                info(`Loading factory for ${key} from path: ${mod.path}`);
+                load(mod, whom);
+            }
+            //instantiate direct or with injected dependencies
+            if (!mod.expo.deps) mod.inst = mod.expo();
+            else mod.inst = injectSync(mod);
+            const inst = mod.inst;
+            if (mod.detach) mod.inst = null;
+            info(`Instance of ${key} successfully created (sync)`);
+            return inst;
+        },
         detach: (key, value) => {
             const mod = map.get(key);
             if (!mod) throw new Error(`Can't find ${key} entry for detaching !!`);
@@ -55,6 +72,12 @@ module.exports = ({info}) => {
     async function inject(mod) {
         const expo = mod.expo;
         const args = await Promise.all(expo.deps.map(dep => di.get(dep, expo.sname)));
+        return expo.apply(null, args);
+    }
+
+    function injectSync(mod) {
+        const expo = mod.expo;
+        const args = expo.deps.map(dep => di.getSync(dep, expo.sname));
         return expo.apply(null, args);
     }
 

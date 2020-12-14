@@ -1,8 +1,8 @@
-const logger = console;
-//const logger = require('./logger')();
+//const logger = console;
+const logger = require('./logger')();
 const di = require('./di-cont')(logger);
 di.add(require('./modules.json'));
-//di.set('logger', { inst:logger });
+di.set('logger', { inst:logger });
 /*
 const run = async () => {
 
@@ -34,6 +34,7 @@ run().catch(err => logger.error(`Catch: ${err}`));
 */ 
 
 /**/
+//console.time('all');
 di.detach('accum', true);
 
 const p1 = di.get('accum').then(a1 => {
@@ -56,9 +57,10 @@ const p3 = di.get('accum').then(a3 => {
 
 const p0 = di.get('storage');
 
-Promise.all([p0, p1, p2, p3]).then(r =>
+Promise.all([p0, p1, p2, p3]).then(r => {
     logger.info('Total amount is %d', r[0].tot)
-).catch(err => logger.error(`Catch on Total amount: ${err}`));;
+    //console.timeEnd('all');
+}).catch(err => logger.error(`Catch on Total amount: ${err}`));;
 
 di.get('DerivedA').then(D => {
     const d = new D('Den');
