@@ -28,12 +28,13 @@ npm install di-async --save
 
 DI-Async has a simple clear API. You need to do few things:
 
-+ Refactor your modules leveraging the [DI-pattern](#Dependency-Injection-pattern)
-+ Create a [DI-container](#Dependency-Injection-Container)
++ Refactor your modules leveraging the [DI pattern](#Dependency-Injection-pattern)
++ Create a [DI Container](#Dependency-Injection-Container)
 + [Register](#Registering-modules) some modules in it
 + Resolve services and use
 
 ``` js
+// simple-sync.js
 // create container
 const DI = require('di-async');
 const di = DI();
@@ -75,6 +76,7 @@ catch (err) {
 Application still stay responsible, when resolving services with async approach.
 
 ``` js
+// simple.js
 // create container
 const DI = require('di-async');
 const di = DI();
@@ -132,6 +134,7 @@ Den 10
 You can try services resolution concurrently.
 
 ``` js
+// concurrent.js
 // create container
 const DI = require('di-async');
 const di = DI();
@@ -331,6 +334,10 @@ di.join(require('./modules.json'));
 ```
 
 ## Dependency Injection Container
+
+DI Container loads service modules in a non-blocking manner only when needed, therefore perfoms **Lazy loading** strategy.
+
+Container implementation allows concurrently load the same singleton dependency. In example program *concurrent.js*, shown above, there are four concurrent requests to *storage* dependency. One request initializes service instance within method *get*, another three obtained the same promise.
 
 Ответсвенность за создание экземпляров и дальнейший жизненный цикл, поиск и внедрение зависимостей, лежит на объекте, называемом **Dependency Injection Container** или DI-контейнер.
 
