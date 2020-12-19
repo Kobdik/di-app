@@ -6,7 +6,7 @@ Laconic Asynchronous Dependency Injection container for JavaScript
 + Asynchronous creation of services
 + Lifetime managment: singleton, transient and scoped services
 + Tiny size and flexible clear API
-+ Concurrent injection of the same singleton dependency
++ Ability to inject the same dependencies concurrently
 
 ## Table of contents
 
@@ -30,7 +30,7 @@ DI-Async has a simple clear API. You need to do few things:
 
 + Refactor your modules leveraging the [DI-pattern](#Dependency-Injection-pattern)
 + Create a [DI-container](#Dependency-Injection-Container)
-+ Register some modules in it
++ [Register](#Registering-modules) some modules in it
 + Resolve services and use
 
 ``` js
@@ -161,7 +161,7 @@ const p0 = di.get('storage');
 
 Promise.all([p0, p1, p2, p3]).then(r => {
     logger.info('Total amount is %d', r[0].tot)
-}).catch(err => logger.error(`Catch on Total amount: ${err}`));;
+}).catch(err => logger.error(`Catch on Total amount: ${err}`));
 
 di.get('DerivedA').then(D => {
     const d = new D('Den');
@@ -299,12 +299,33 @@ module.exports = (ClassA) => {
             return a + b;
         }
     }
-    //return DerivedA;
-    return new Promise(resolve => setTimeout(resolve, 2000, DerivedA));
+    return DerivedA;
+    // just to simulate delayed service return Promise
+    // return new Promise(resolve => setTimeout(resolve, 2000, DerivedA));
 };
 
 module.exports.sname = "derived A";
 module.exports.deps = ["ClassA"];
+```
+
+## Registering modules
+
+Registering singleton service instance.
+
+``` js
+di.set('logger', console);
+// or
+di.setEntry('logger', { inst: console });
+```
+
+Registering three service factories. Last one returns new instance on each request.
+
+``` js
+di.join({
+    "storage": { "path": "./services/storage" },
+    "tresshold": { "path": "./services/tresshold" },
+    "accumulator": { "path": "./services/accumulator", "transient": true } 
+});
 ```
 
 ## Dependency Injection Container
