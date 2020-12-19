@@ -264,7 +264,7 @@ As said in my favorite book (**Node.js Design Patterns** ISBN 978-1-83921-411-0)
 > The nature of JavaScript affects traditional design patterns. There are so many ways in which traditional design patterns can be implemented in JavaScript that the traditional, strongly object-oriented implementation stops being relevant.
 
 Class as service is more flexible approach than instance creation by constructor.
-Constructor arguments stay free from dependencies. There is no need to register constants as dependent services.
+Constructor arguments stay free from dependencies. There is no need to register constants as input services.
 
 ``` js
 // class-a.js
