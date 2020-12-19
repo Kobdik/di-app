@@ -6,34 +6,36 @@ module.exports = ({info}) => {
     const di = {
         get: (key, whom='di') => {
             const mod = map.get(key);
-            //{ path, expo, inst })
+            //{ lib: {path, expo, transient}, inst })
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
             if (mod.inst) return mod.inst;
-            if (!mod.expo) {
-                //info(`Loading factory for ${key} from path: ${mod.path}`);
-                load(mod, whom);
+            const lib = mod.lib;
+            if (!lib) throw new Error(`Can't read ${key} module description for ${whom} !!`);
+            if (!lib.expo) {
+                info(`Loading factory for ${key} from path: ${lib.path}`);
+                lib.expo = load(lib, whom);
             }
             //instantiate direct or with injected dependencies
-            if (!mod.expo.deps) mod.inst = mod.expo();
-            else mod.inst = inject(mod);
+            if (!lib.expo.deps) mod.inst = lib.expo();
+            else mod.inst = inject(lib);
             const inst = mod.inst;
-            if (mod.detach) mod.inst = null;
-            //info(`Instance of ${key} successfully created`);
+            if (mod.transient) mod.inst = null;
+            info(`Instance of ${key} successfully created (sync)`);
             return inst;
         },
-        detach: (key, value) => {
-            const mod = map.get(key);
-            if (!mod) throw new Error(`Can't find ${key} entry for detaching !!`);
-            mod.detach = value;
+        set: (key, inst) => {
+            if (!inst) throw new Error(`Singleton instance for ${key} not set !!`);
+            else map.set(key, { inst });
         },
-        set: (key, mod) => {
-            if (mod.inst || mod.path) map.set(key, mod);
-            else throw new Error(`Entry for ${key} not set !!`); 
+        setEntry: (key, mod) => {
+            if (mod.inst || mod.lib && mod.lib.path) map.set(key, mod);
+            else throw new Error(`Entry for ${key} not set !!`);
         },
-        add: (modules) => {
+        join: (modules) => {
             //map each key to appropriate path
-            for (const key in modules) 
-                map.set(key, { path: modules[key], expo: null, inst: null, detach: false });
+            for (const key in modules) {
+                map.set(key, { lib: modules[key], marked: false, inst: null });
+            }
         },
         each: (cb) => {
             //cb(mod, key, map)

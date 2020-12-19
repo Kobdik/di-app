@@ -1,9 +1,8 @@
 {
-    "config": "./config",
-    "logger": "./logger",
-    "storage": "./model/storage",
-    "tresshold": "./model/tresshold",
-    "accum": "./model/accumulator",
-    "ClassA": "./model/class-a",
-    "DerivedA": "./model/derived-a"
+    "logger": { "path": "./logger" },
+    "storage": { "path": "./model/storage" },
+    "tresshold": { "path": "./model/tresshold" },
+    "accum": { "path": "./model/accumulator", "transient": true },
+    "ClassA": { "path": "./model/class-a" },
+    "DerivedA": { "path": "./model/derived-a" }
 }

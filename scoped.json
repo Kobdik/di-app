@@ -1,0 +1,5 @@
+{
+    "storage": { "path": "./model/storage" },
+    "tresshold": { "path": "./model/tresshold" },
+    "accum": { "path": "./model/accumulator", "transient": true }
+}

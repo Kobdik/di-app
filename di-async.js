@@ -1,8 +1,9 @@
+const path = require('path');
 
-module.exports = function createDI ({ info }) {
+module.exports = function createDI () {
 
-    const map = new Map();
-
+    const map = new Map(), cwd = process.cwd();
+    
     const di = {
         get: async (key, whom='di') => {
             const mod = map.get(key);
@@ -10,19 +11,14 @@ module.exports = function createDI ({ info }) {
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
             if (mod.inst) return mod.inst;
             const lib = mod.lib;
-            if (!lib) throw new Error(`Can't read ${key} module description for ${whom} !!`);
+            if (!lib) throw new Error(`Can't find ${key} module for ${whom} !!`);
             if (mod.marked && !lib.transient) {
-                info(`Promise singleton creation of ${key}`);
                 if (!mod.swear) mod.swear = new Promise(resolve => mod.resolve = resolve);
                 return mod.swear;
             }
             mod.marked = true;
             //obtain module.exports service factory
-            if (!lib.expo) {
-                info(`Loading factory for ${key} from path: ${lib.path}`);
-                lib.expo = load(lib, whom);
-                //process.nextTick(info, `Next tick after loading ${key}`)
-            }
+            if (!lib.expo) lib.expo = load(lib, whom);
             //instantiate direct or with injected dependencies
             if (!lib.expo.deps) mod.inst = lib.expo();
             else mod.inst = await inject(lib);
@@ -30,8 +26,6 @@ module.exports = function createDI ({ info }) {
             const inst = mod.inst;
             if (mod.swear) mod.resolve(inst);
             if (lib.transient) mod.inst = null;
-            info(`Instance of ${key} successfully created`);
-            //process.nextTick(info, `Next tick after creating ${key}`)
             return inst;
         },
         getSync: (key, whom='di') => {
@@ -40,17 +34,13 @@ module.exports = function createDI ({ info }) {
             if (!mod) throw new Error(`Can't find ${key} entry for ${whom} !!`);
             if (mod.inst) return mod.inst;
             const lib = mod.lib;
-            if (!lib) throw new Error(`Can't read ${key} module description for ${whom} !!`);
-            if (!lib.expo) {
-                info(`Loading factory for ${key} from path: ${lib.path}`);
-                lib.expo = load(lib, whom);
-            }
+            if (!lib) throw new Error(`Can't find ${key} module for ${whom} !!`);
+            if (!lib.expo) lib.expo = load(lib, whom);
             //instantiate direct or with injected dependencies
             if (!lib.expo.deps) mod.inst = lib.expo();
             else mod.inst = injectSync(lib);
             const inst = mod.inst;
             if (mod.transient) mod.inst = null;
-            info(`Instance of ${key} successfully created (sync)`);
             return inst;
         },
         set: (key, inst) => {
@@ -66,15 +56,15 @@ module.exports = function createDI ({ info }) {
             for (const key in modules) {
                 map.set(key, { lib: modules[key], marked: false, inst: null });
             }
+            //console.dir(modules);
         },
         each: (cb) => {
-            //cb(mod, key, map)
-            map.forEach(cb);
+            map.forEach(cb); //cb(mod, key, map)
         },
         newScope: () => {
             const scope = createDI({ info });
             map.forEach((mod, key) => {
-                scope.setEntry(key, { ...mod });
+                scope.setEntry(key, { ...mod, marked: false });
             });
             return scope;
         },
@@ -95,7 +85,7 @@ module.exports = function createDI ({ info }) {
     function load(lib, whom) {
         try {
             //exports service factory
-            return require(lib.path);
+            return require(path.join(cwd, lib.path));
         }
         catch (err) {
             throw new Error(`Can't load module from path: ${lib.path} for ${whom}!!`);
@@ -108,4 +98,3 @@ module.exports = function createDI ({ info }) {
 };
 
 module.exports.sname = 'di container';
-module.exports.deps = ['logger'];
