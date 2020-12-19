@@ -1,5 +1,5 @@
 {
-    "storage": { "path": "./model/storage" },
-    "tresshold": { "path": "./model/tresshold" },
-    "accum": { "path": "./model/accumulator", "transient": true }
+    "storage": { "path": "./services/storage" },
+    "tresshold": { "path": "./services/tresshold" },
+    "accum": { "path": "./services/accumulator", "transient": true }
 }
