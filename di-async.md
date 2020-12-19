@@ -300,7 +300,7 @@ module.exports = (ClassA) => {
         }
     }
     return DerivedA;
-    // just to simulate delayed service return Promise
+    // just to simulate delayed service
     // return new Promise(resolve => setTimeout(resolve, 2000, DerivedA));
 };
 
@@ -314,7 +314,7 @@ Registering singleton service instance.
 
 ``` js
 di.set('logger', console);
-// or
+// or equivalently
 di.setEntry('logger', { inst: console });
 ```
 
@@ -326,6 +326,8 @@ di.join({
     "tresshold": { "path": "./services/tresshold" },
     "accumulator": { "path": "./services/accumulator", "transient": true } 
 });
+// or from external JSON-file
+di.join(require('./modules.json'));
 ```
 
 ## Dependency Injection Container
