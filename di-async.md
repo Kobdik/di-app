@@ -2,9 +2,9 @@
 
 Laconic Asynchronous Dependency Injection container for JavaScript
 
-+ Declarative definition and Lazy loading of modules
++ Declarative definition and **Lazy Loading** of modules
 + Asynchronous creation of services
-+ Lifetime managment: singleton, transient and scoped services
++ Lifetime management: singleton, transient and scoped services
 + Tiny size and flexible clear API
 + Ability to inject the same dependencies concurrently
 
@@ -73,7 +73,7 @@ catch (err) {
 
 ```
 
-Application still stay responsible, when resolving services with async approach.
+Application still stay responsible, when resolving services with asynchronous approach.
 
 ``` js
 // simple.js
@@ -194,14 +194,14 @@ Total amount is 555
 
 ![Example of the Dependencies graph](./graph.svg)
 
-Example of the Dependencies graph represent dependencies of several services towards each other. Directions of graph links assumed from bottom to top.
+The example of the Dependencies graph represent dependencies of several services towards each other. Directions of graph links assumed from bottom to top.
 
 ## Dependency Injection pattern
 
 Dependency Injection (DI) is a pattern where the dependencies
-of a service component are provided as input by external entity often called the injector.
+of a service component are provided as input by the external entity often called the injector.
 
-Refactor your modules to accomplish DI pattern as shown below. Every service module exports fabric function with *deps* property set to array of dependencies names.
+Refactor your modules to accomplish DI patterns as shown below. Every service module exports a fabric function with *deps* property set to an array of dependencies names.
 
 ``` js
 // accumulator.js 
@@ -266,7 +266,7 @@ module.exports.sname = "Tresshold";
 As said in my favorite book (**Node.js Design Patterns** ISBN 978-1-83921-411-0):
 > The nature of JavaScript affects traditional design patterns. There are so many ways in which traditional design patterns can be implemented in JavaScript that the traditional, strongly object-oriented implementation stops being relevant.
 
-Class as service is more flexible approach than instance creation by constructor.
+Class as service is a more flexible approach than instance creation by constructor.
 Constructor arguments stay free from dependencies. There is no need to register constants as input services.
 
 ``` js
@@ -321,7 +321,7 @@ di.set('logger', console);
 di.setEntry('logger', { inst: console });
 ```
 
-Registering three service factories. Last one returns new instance on each request.
+Registering three service factories. The last one returns a new instance on each request.
 
 ``` js
 di.join({
@@ -335,13 +335,11 @@ di.join(require('./modules.json'));
 
 ## Dependency Injection Container
 
-DI Container loads service modules in a non-blocking manner only when needed, therefore perfoms **Lazy loading** strategy.
+DI Container loads service modules in a non-blocking manner only when needed, therefore performs **Lazy Loading** strategy.
 
-Container implementation allows concurrently load the same singleton dependency. In example program *concurrent.js*, shown above, there are four concurrent requests to *storage* dependency. One request initializes service instance within method *get*, another three obtained the same promise.
+Container implementation allows concurrently load the same singleton dependency. In example program *concurrent.js*, shown above, there are four concurrent requests to *storage* dependency. Only one request initializes service instance within method *get*, another three obtained the same promise.
 
 Ответсвенность за создание экземпляров и дальнейший жизненный цикл, поиск и внедрение зависимостей, лежит на объекте, называемом **Dependency Injection Container** или DI-контейнер.
-
-Экземпляры служб и весь граф зависимостей создаются в *ленивом* режиме (**Lazy loading**) без необходимости предварительной загрузки модулей.
 
 Реализация DI-контейнера соответствует шаблону **Dependency Injection**, чтобы другие службы могли его внедрить. Такая возможность позволяет отложить загрузку отдельных зависимостей, используя внедренный контейнер в качестве локатора служб.
 
