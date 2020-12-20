@@ -1,6 +1,6 @@
 {
     "storage": { "path": "./services/storage" },
-    "tresshold": { "path": "./services/tresshold" },
+    "thresshold": { "path": "./services/thresshold" },
     "accumulator": { "path": "./services/accumulator", "transient": true },
     "ClassA": { "path": "./services/class-a" },
     "DerivedA": { "path": "./services/derived-a" }

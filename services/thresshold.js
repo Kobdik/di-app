@@ -11,4 +11,4 @@ module.exports = () => {
     }
 };
 
-module.exports.sname = "Tresshold";
+module.exports.sname = "Thresshold service";

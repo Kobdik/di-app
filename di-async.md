@@ -74,7 +74,7 @@ catch (err) {
 
 ```
 
-Application still stay responsible, when resolving services with asynchronous approach.
+Application still staying responsible for IO events, resolving services with asynchronous approach.
 
 ``` js
 // simple.js
@@ -173,7 +173,7 @@ di.get('DerivedA').then(D => {
 }).catch(err => logger.error(`Catch on DerivedA: ${err}`));
 ```
 
-Output show that Dan shifted forward by three positions.
+Output show that Den shifted forward by three positions.
 
 ``` js
 1 added to 0
@@ -228,17 +228,17 @@ module.exports.deps = ["storage", "logger"];
 
 // storage.js
 // fabric function of storage service
-module.exports = (tresshold) => {
+module.exports = (thresshold) => {
     let acc = 0;
     return {
         add(a) {
             acc += a;
         },
         get exceeded() {
-            return acc > tresshold.val;
+            return acc > thresshold.val;
         },
         get limit() {
-            return tresshold.val;
+            return thresshold.val;
         },
         get tot() {
             return acc;
@@ -246,9 +246,9 @@ module.exports = (tresshold) => {
     }
 };
 module.exports.sname = "Storage service";
-module.exports.deps = ["tresshold"];
+module.exports.deps = ["thresshold"];
 
-// tresshold.js
+// thresshold.js
 // fabric function without dependencies
 module.exports = () => {
     let limit = 500;
@@ -261,7 +261,7 @@ module.exports = () => {
         },
     }
 };
-module.exports.sname = "Tresshold";
+module.exports.sname = "Thresshold";
 ```
 
 As said in my favorite book (**Node.js Design Patterns** ISBN 978-1-83921-411-0):
@@ -333,7 +333,7 @@ Registering multiple services. The last one registered as *Transient*.
 ``` js
 di.join({
     "storage": { "path": "./services/storage" },
-    "tresshold": { "path": "./services/tresshold" },
+    "thresshold": { "path": "./services/thresshold" },
     "accumulator": { "path": "./services/accumulator", "transient": true } 
 });
 // or from external JSON-file
@@ -357,7 +357,7 @@ Then create new scoped containers within method *newScope* of shared container a
 ``` js
 const run = async () => {
     // singleton instance shared with scoped containers
-    const lim = await shared.get('tresshold');
+    const lim = await shared.get('thresshold');
 
     lim.val = 50;
     const scope1 = shared.newScope();
@@ -397,6 +397,27 @@ const run = async () => {
 
 run().catch(err => console.error(`Catch: ${err}`));
 
+```
+
+Each instances of the *storage* service have they own scope. Both share the same instance of *threshold*.
+
+``` log
+1 added to 0
+4 added to 1
+Amount is 5
+10 added to 0
+40 added to 10
+Storage limit 50 exceeded by 5 !
+Amount is 50
+Total amount is 55
+1 added to 0
+9 added to 1
+Amount is 10
+10 added to 0
+90 added to 10
+Storage limit 100 exceeded by 10 !
+Amount is 100
+Total amount is 110
 ```
 
 ## Dependency Injection Container

@@ -62,7 +62,7 @@ module.exports = function createDI () {
             map.forEach(cb); //cb(mod, key, map)
         },
         newScope: () => {
-            const scope = createDI({ info });
+            const scope = createDI();
             map.forEach((mod, key) => {
                 scope.setEntry(key, { ...mod, marked: false });
             });

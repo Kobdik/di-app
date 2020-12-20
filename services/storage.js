@@ -1,15 +1,15 @@
 
-module.exports = (tresshold) => {
+module.exports = (thresshold) => {
     let acc = 0;
     return {
         add(a) {
             acc += a;
         },
         get exceeded() {
-            return acc > tresshold.val;
+            return acc > thresshold.val;
         },
         get limit() {
-            return tresshold.val;
+            return thresshold.val;
         },
         get tot() {
             return acc;
@@ -18,4 +18,4 @@ module.exports = (tresshold) => {
 };
 
 module.exports.sname = "Storage";
-module.exports.deps = ["tresshold"];
+module.exports.deps = ["thresshold"];
