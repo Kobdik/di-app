@@ -26,7 +26,7 @@
   </g>
   <g transform="translate(50,250)">
     <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad1)" />
-    <text x="10" y="25">tresshold</text>
+    <text x="10" y="25">thresshold</text>
   </g>
   <g transform="translate(450,50)">
     <ellipse cx="40" cy="20" rx="72" ry="36" fill="url(#grad3)" />
