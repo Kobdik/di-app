@@ -4,9 +4,9 @@ Laconic Asynchronous Dependency Injection container for JavaScript
 
 + Declarative definition and **Lazy Loading** of modules
 + Asynchronous creation of services
-+ Lifetime management: singleton, transient and scoped services
 + Tiny size and flexible clear API
 + Ability to inject the same dependencies concurrently
++ **Lifetime Management**: Singleton, Transient and Scoped lifetime
 
 ## Table of contents
 
@@ -14,6 +14,7 @@ Laconic Asynchronous Dependency Injection container for JavaScript
 + [Usage](#Usage)
 + [Dependencies graph](#Dependencies-graph)
 + [Dependency Injection pattern](#Dependency-Injection-pattern)
++ [Registering modules](#Registering-modules)
 + [Dependency Injection Container](#Dependency-Injection-Container)
 
 ## Installation
@@ -313,7 +314,13 @@ module.exports.deps = ["ClassA"];
 
 ## Registering modules
 
-Registering singleton service instance.
+**Lifetime Management** is the concept of regulating the number of returned instances and the duration of the lifetime of those instances.
+
+By default, container return *Singleton* instance and holds on reference to it. Container always return that same instance.
+
+Registering service as *Transient* lead to another outcome. Returned instance is not cached in container. A new instance of the component will be created each time the service is requested from the container.
+
+Registering *Singleton* service instance.
 
 ``` js
 di.set('logger', console);
@@ -321,7 +328,7 @@ di.set('logger', console);
 di.setEntry('logger', { inst: console });
 ```
 
-Registering three service factories. The last one returns a new instance on each request.
+Registering multiple services. The last one registered as *Transient*.
 
 ``` js
 di.join({
@@ -333,16 +340,69 @@ di.join({
 di.join(require('./modules.json'));
 ```
 
+The *Scoped* service behaves much like the *Singleton* service within a single, well-defined scope.
+
+To obtain *Scoped* service behavior create new container as well-defined scope and register appropriate services. To optimize execution performance shares service factories and instances in the dedicated container.
+
+``` js
+const DI = require('./di-async');
+const shared = DI();
+shared.join(require('./modules.json'));
+// singleton instance shared with scoped containers
+shared.set('logger', console );
+```
+
+Then create new scoped containers within method *newScope* of shared container and do some requests. The *storage* dependency of the *accumulator* service behaves like *Scoped*.
+
+``` js
+const run = async () => {
+    // singleton instance shared with scoped containers
+    const lim = await shared.get('tresshold');
+
+    lim.val = 50;
+    const scope1 = shared.newScope();
+    
+    const a11 = await scope1.get('accumulator');
+    a11.add(1);
+    a11.add(4);
+    console.info('Amount is %d', a11.tot);
+
+    const a12 = await scope1.get('accumulator');
+    a12.add(10);
+    a12.add(40);
+    console.info('Amount is %d', a12.tot);
+
+    // Singleton instance within scope1
+    const s1 = await scope1.get('storage');
+    console.info('Total amount is %d', s1.tot);
+
+    lim.val = 100;
+    const scope2 = shared.newScope();
+    
+    const a21 = await scope2.get('accumulator');
+    a21.add(1);
+    a21.add(9);
+    console.info('Amount is %d', a21.tot);
+
+    const a22 = await scope2.get('accumulator');
+    a22.add(10);
+    a22.add(90);
+    console.info('Amount is %d', a22.tot);
+
+    // Singleton instance within scope2
+    const s2 = await scope2.get('storage');
+    console.info('Total amount is %d', s2.tot);
+
+};
+
+run().catch(err => console.error(`Catch: ${err}`));
+
+```
+
 ## Dependency Injection Container
 
-DI Container loads service modules in a non-blocking manner only when needed, therefore performs **Lazy Loading** strategy.
+DI-Async loads service modules in an asynchronous manner only when needed, therefore performs **Lazy Loading** strategy.
 
-Container implementation allows concurrently load the same singleton dependency. In example program *concurrent.js*, shown above, there are four concurrent requests to *storage* dependency. Only one request initializes service instance within method *get*, another three obtained the same promise.
-
-Ответсвенность за создание экземпляров и дальнейший жизненный цикл, поиск и внедрение зависимостей, лежит на объекте, называемом **Dependency Injection Container** или DI-контейнер.
-
-Реализация DI-контейнера соответствует шаблону **Dependency Injection**, чтобы другие службы могли его внедрить. Такая возможность позволяет отложить загрузку отдельных зависимостей, используя внедренный контейнер в качестве локатора служб.
-
-Вывод показывает, что с получением экземпляра *DerivedA* происходит задержка на 2 сек, работа производится с "готовым к использованию" экземпляром.
+Container implementation allows concurrently load the same *Singleton* dependency. In example program *concurrent.js*, shown above, there are four concurrent requests to *storage* dependency. Only one request initializes service instance within method *get*, another three obtained the same promise.
 
 + [Go to top](#DI-Async)
