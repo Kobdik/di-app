@@ -7,11 +7,13 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "DI-Container", "Lazy-loading"
+    "DI-Container",
+    "Lazy-loading"
   ],
   "author": "Kobdikov Tulegen",
   "license": "MIT",
   "dependencies": {
+    "di-async": "^1.0.10",
     "dotenv": "^8.2.0",
     "winston": "^3.3.3"
   }

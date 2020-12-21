@@ -1,5 +1,5 @@
-
-module.exports = function createDI ({ info }) {
+// DI Container with logging
+module.exports = function createDI () {
 
     const map = new Map();
 
@@ -12,16 +12,16 @@ module.exports = function createDI ({ info }) {
             const lib = mod.lib;
             if (!lib) throw new Error(`Can't read ${key} module description for ${whom} !!`);
             if (mod.marked && !lib.transient) {
-                info(`Promise singleton creation of ${key}`);
+                console.info(`Promise singleton creation of ${key}`);
                 if (!mod.swear) mod.swear = new Promise(resolve => mod.resolve = resolve);
                 return mod.swear;
             }
             mod.marked = true;
             //obtain module.exports service factory
             if (!lib.expo) {
-                info(`Loading factory for ${key} from path: ${lib.path}`);
+                console.info(`Loading factory for ${key} from path: ${lib.path}`);
                 lib.expo = load(lib, whom);
-                //process.nextTick(info, `Next tick after loading ${key}`)
+                process.nextTick(console.info, `Next tick after loading ${key}`)
             }
             //instantiate direct or with injected dependencies
             if (!lib.expo.deps) mod.inst = lib.expo();
@@ -30,8 +30,8 @@ module.exports = function createDI ({ info }) {
             const inst = mod.inst;
             if (mod.swear) mod.resolve(inst);
             if (lib.transient) mod.inst = null;
-            info(`Instance of ${key} successfully created`);
-            //process.nextTick(info, `Next tick after creating ${key}`)
+            console.info(`Instance of ${key} successfully created`);
+            process.nextTick(console.info, `Next tick after creating ${key}`)
             return inst;
         },
         getSync: (key, whom='di') => {
@@ -42,7 +42,7 @@ module.exports = function createDI ({ info }) {
             const lib = mod.lib;
             if (!lib) throw new Error(`Can't read ${key} module description for ${whom} !!`);
             if (!lib.expo) {
-                info(`Loading factory for ${key} from path: ${lib.path}`);
+                console.info(`Loading factory for ${key} from path: ${lib.path}`);
                 lib.expo = load(lib, whom);
             }
             //instantiate direct or with injected dependencies
@@ -50,7 +50,7 @@ module.exports = function createDI ({ info }) {
             else mod.inst = injectSync(lib);
             const inst = mod.inst;
             if (mod.transient) mod.inst = null;
-            info(`Instance of ${key} successfully created (sync)`);
+            console.info(`Instance of ${key} successfully created (sync)`);
             return inst;
         },
         set: (key, inst) => {
@@ -108,4 +108,3 @@ module.exports = function createDI ({ info }) {
 };
 
 module.exports.sname = 'di container';
-module.exports.deps = ['logger'];
