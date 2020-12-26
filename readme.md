@@ -1,21 +1,23 @@
-# DI-Async
+# DI-Async Container
 
 Laconic Asynchronous Dependency Injection container for JavaScript
 
-+ Declarative definition and **Lazy Loading** of modules
-+ Asynchronous creation of services
++ Declarative configuration and **Lazy Loading** of modules
++ Asynchronous resolution of services
 + Tiny size and flexible clear API
 + Ability to inject the same dependencies concurrently
 + **Lifetime Management**: Singleton, Transient and Scoped lifetime
 
+Imagine a web server that has dozens of services. If its startup speed is critical, then asynchronous **Lazy Loading** of services solves that problem. It will allow the application to launch faster, with the minimal count of necessary services, while the server remains responsive.
+
 ## Table of contents
 
-+ [Installation](#Installation)
-+ [Usage](#Usage)
-+ [Dependencies graph](#Dependencies-graph)
-+ [Dependency Injection pattern](#Dependency-Injection-pattern)
-+ [Registering modules](#Registering-modules)
-+ [Dependency Injection Container](#Dependency-Injection-Container)
++ [Installation](#installation)
++ [Usage](#usage)
++ [Dependencies graph](#dependencies-graph)
++ [Dependency Injection pattern](#dependency-injection-pattern)
++ [Registering modules](#registering-modules)
++ [Dependency Injection Container](#dependency-injection-container)
 
 ## Installation
 
@@ -29,9 +31,9 @@ npm install di-async --save
 
 DI-Async has a simple clear API. You need to do few things:
 
-+ Refactor your modules leveraging the [DI pattern](#Dependency-Injection-pattern)
-+ Create a [DI Container](#Dependency-Injection-Container)
-+ [Register](#Registering-modules) some modules in it
++ Refactor your modules leveraging the [DI pattern](#dependency-injection-pattern)
++ Create a [DI Container](#dependency-injection-container)
++ [Register](#registering-modules) some modules in it
 + Resolve services and use
 
 ``` js
@@ -72,9 +74,17 @@ catch (err) {
     console.error(`Catch: ${err}`)
 };
 
+// modules.json
+{
+    "storage": { "path": "./services/storage" },
+    "thresshold": { "path": "./services/thresshold" },
+    "accumulator": { "path": "./services/accumulator", "transient": true },
+    "ClassA": { "path": "./services/class-a" },
+    "DerivedA": { "path": "./services/derived-a" }
+}
 ```
 
-Application still staying responsible for IO events, resolving services with asynchronous approach.
+Application stays responsible, resolving services with asynchronous approach.
 
 ``` js
 // simple.js
@@ -173,7 +183,7 @@ di.get('DerivedA').then(D => {
 }).catch(err => logger.error(`Catch on DerivedA: ${err}`));
 ```
 
-Output show that Den shifted forward by three positions.
+Output shows that Den shifted forward by three positions.
 
 ``` js
 1 added to 0
@@ -193,7 +203,7 @@ Total amount is 555
 
 ## Dependencies graph
 
-![Example of the Dependencies graph](./graph.svg)
+![Example of the Dependencies graph](https://github.com/Kobdik/di-app/blob/master/graph.svg)
 
 The example of the Dependencies graph represent dependencies of several services towards each other. Directions of graph links assumed from bottom to top.
 
@@ -267,8 +277,7 @@ module.exports.sname = "Thresshold";
 As said in my favorite book (**Node.js Design Patterns** ISBN 978-1-83921-411-0):
 > The nature of JavaScript affects traditional design patterns. There are so many ways in which traditional design patterns can be implemented in JavaScript that the traditional, strongly object-oriented implementation stops being relevant.
 
-Class as service is a more flexible approach than instance creation by constructor.
-Constructor arguments stay free from dependencies. There is no need to register constants as input services.
+Class as a service is a more flexible approach than using a constructor as a dependency injection function. Constructor arguments stay free from dependencies. There is no need to register constants as input services.
 
 ``` js
 // class-a.js
@@ -304,21 +313,44 @@ module.exports = (ClassA) => {
         }
     }
     return DerivedA;
-    // just to simulate delayed service
-    // return new Promise(resolve => setTimeout(resolve, 2000, DerivedA));
 };
 
 module.exports.sname = "derived A";
 module.exports.deps = ["ClassA"];
 ```
 
+Just for example, *DerivedA* service was rewritten in asynchronous manner.
+
+``` js
+module.exports = (ClassA) => {
+
+    class DerivedA extends ClassA {
+
+        constructor(name) {
+            super(name);
+        }
+
+        sum(a, b) {
+            return a + b;
+        }
+
+    }
+    return new Promise(resolve => setTimeout(resolve, 2000, DerivedA));
+};
+
+module.exports.sname = "derived A";
+module.exports.deps = ["ClassA"];
+```
+
+Therefore, service would be available two seconds later.
+
 ## Registering modules
 
 **Lifetime Management** is the concept of regulating the number of returned instances and the duration of the lifetime of those instances.
 
-By default, container return *Singleton* instance and holds on reference to it. Container always return that same instance.
+By default, container returns *Singleton* instance and holds on reference to it. The container always returns that same instance.
 
-Registering service as *Transient* lead to another outcome. Returned instance is not cached in container. A new instance of the component will be created each time the service is requested from the container.
+Registering service as *Transient* lead to another outcome. Returned instance is not cached in the container. A new instance of the component will be created each time the service is requested from the container.
 
 Registering *Singleton* service instance.
 
@@ -328,13 +360,15 @@ di.set('logger', console);
 di.setEntry('logger', { inst: console });
 ```
 
-Registering multiple services. The last one registered as *Transient*.
+Registering multiple services. The *accumulator* service registered as *Transient*.
 
 ``` js
 di.join({
     "storage": { "path": "./services/storage" },
     "thresshold": { "path": "./services/thresshold" },
-    "accumulator": { "path": "./services/accumulator", "transient": true } 
+    "accumulator": { "path": "./services/accumulator", "transient": true },
+    "ClassA": { "path": "./services/class-a" },
+    "DerivedA": { "path": "./services/derived-a" }
 });
 // or from external JSON-file
 di.join(require('./modules.json'));
@@ -342,17 +376,17 @@ di.join(require('./modules.json'));
 
 The *Scoped* service behaves much like the *Singleton* service within a single, well-defined scope.
 
-To obtain *Scoped* service behavior create new container as well-defined scope and register appropriate services. To optimize execution performance shares service factories and instances in the dedicated container.
+To obtain *Scoped* service behavior create new container as well-defined scope and register appropriate *Singleton* services. To optimize execution performance should share service factories and instances within a dedicated container.
 
 ``` js
-const DI = require('./di-async');
+const DI = require('di-async');
 const shared = DI();
 shared.join(require('./modules.json'));
 // singleton instance shared with scoped containers
 shared.set('logger', console );
 ```
 
-Then create new scoped containers within method *newScope* of shared container and do some requests. The *storage* dependency of the *accumulator* service behaves like *Scoped*.
+Then create new scoped containers through method *newScope* of shared container and do some actions. And now, the *storage* dependency of the *accumulator* service behaves as *Scoped*.
 
 ``` js
 const run = async () => {
@@ -420,10 +454,61 @@ Amount is 100
 Total amount is 110
 ```
 
+Simplified example of scoped service used in middleware.
+
+``` js
+const DI = require('di-async');
+const shared = DI();
+// register services
+shared.join({
+    "ClassA": { "path": "./services/class-a" },
+    "student": { "path": "./services/student" }
+});
+shared.set('logger', console );
+// register middleware function
+// in which create the scoped container
+app.use((req, res, next) => {
+    shared.get('ClassA').then(A => {
+        // new scope per request
+        req.scope = shared.newScope();
+        // provide constructor arguments
+        const person = new A(req.user.name);
+        // register scoped service instance
+        req.scope.set('person', person);
+        next();
+    }).catch(next);
+});
+// somewhere obtain from scope and use it
+app.get('/api/me', (req, res) => {
+    const person = req.scope.getSync('person');
+    // Do some work with that person
+    res.end(person.name);
+});
+// or obtain from scope and use dependent service
+app.get('/api/student', (req, res) => {
+    const student = req.scope.getSync('student');
+    res.end(student.ask());
+});
+
+// student.js - used as scoped service
+module.exports = (person) => {
+
+    return {
+        ask() {
+            return `My name is ${person.name}`;
+        }
+    }    
+};
+module.exports.sname = "student service";
+module.exports.deps = ["person"];
+```
+
+The *person* service defined implicitly as the instance of *ClassA*, but you can explicitly define dependents chain of that service.
+
 ## Dependency Injection Container
 
-DI-Async loads service modules in a non-blocking manner only when needed, therefore performs **Lazy Loading** strategy.
+DI-Async loads service modules in an asynchronous manner only when needed, therefore performs **Lazy Loading** strategy. No module loading before service have been requested.
 
-Container implementation allows concurrently load the same *Singleton* dependency. In example program *concurrent.js*, shown above, there are four concurrent requests to *storage* dependency. Only one request initializes service instance within method *get*, another three obtained the same promise.
+Container implementation allows concurrently load the same *Singleton* dependency. In example program *concurrent.js*, shown above, there are four concurrent requests to *storage* dependency. Only first request loads factory and create service instance within method *get*, others three awaits the same promise.
 
-+ [Go to top](#DI-Async)
+[See examples and the source code on GitHub](https://github.com/Kobdik/di-app).
