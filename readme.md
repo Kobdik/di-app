@@ -8,7 +8,7 @@ Laconic Asynchronous Dependency Injection container for JavaScript
 + Ability to inject the same dependencies concurrently
 + **Lifetime Management**: Singleton, Transient and Scoped lifetime
 
-Imagine a web server that has dozens of services. If its startup speed is critical, then asynchronous **Lazy Loading** of services solves that problem. It will allow the application to launch faster, with the minimal count of necessary services, while the server remains responsive.
+Imagine a web server that has dozens of services. If its startup speed is critical, then asynchronous **Lazy Loading** of services solves that problem. It will allow the application to launch faster, with the minimal count of necessary services. Even while loading dependencies graph the server stays still responsive.
 
 ## Table of contents
 
@@ -84,7 +84,7 @@ catch (err) {
 }
 ```
 
-Application stays responsible, resolving services with asynchronous approach.
+Application stays responsive, resolving services with asynchronous approach.
 
 ``` js
 // simple.js
@@ -509,6 +509,6 @@ The *person* service implicitly depends on *ClassA* service, there is no module 
 
 DI-Async loads service modules in an asynchronous manner only when needed, therefore performs **Lazy Loading** strategy. No module loading before service have been requested.
 
-Container implementation allows concurrently load the same *Singleton* dependency. In example program *concurrent.js*, shown above, there are four concurrent requests to *storage* dependency. Only first request loads factory and create service instance within method *get*, others three awaits the same promise.
+Container implementation allows concurrently load the same *Singleton* dependency. In example program *concurrent.js*, shown above, there are three implicit and one explicit concurrent requests to *storage* dependency. Only first request loads factory and create service instance within method *get*, the other three awaits the same promise, that will return resolved instance.
 
 [See examples and the source code on GitHub](https://github.com/Kobdik/di-app).
