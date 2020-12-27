@@ -503,7 +503,7 @@ module.exports.sname = "student service";
 module.exports.deps = ["person"];
 ```
 
-The *person* service defined implicitly as the instance of *ClassA*, but you can explicitly define dependents chain of that service.
+The *person* service implicitly depends on *ClassA* service, there is no module with service definition, but you can explicitly define dependents chain of that service.
 
 ## Dependency Injection Container
 
