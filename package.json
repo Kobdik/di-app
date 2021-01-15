@@ -13,8 +13,11 @@
   "author": "Kobdikov Tulegen",
   "license": "MIT",
   "dependencies": {
-    "di-async": "^1.0.10",
+    "JSONStream": "^1.3.5",
+    "di-async": "^1.0.21",
     "dotenv": "^8.2.0",
-    "winston": "^3.3.3"
+    "mongodb": "^3.6.3",
+    "winston": "^3.3.3",
+    "ws": "^7.4.2"
   }
 }

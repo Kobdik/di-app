@@ -18,7 +18,7 @@ module.exports = function createDI () {
             }
             mod.marked = true;
             //obtain module.exports service factory
-            if (!lib.expo) lib.expo = load(lib, whom);
+            if (!lib.expo) lib.expo = load(lib, key);
             //instantiate direct or with injected dependencies
             if (!lib.expo.deps) mod.inst = lib.expo();
             else mod.inst = await inject(lib);
@@ -35,7 +35,7 @@ module.exports = function createDI () {
             if (mod.inst) return mod.inst;
             const lib = mod.lib;
             if (!lib) throw new Error(`Can't find ${key} module for ${whom} !!`);
-            if (!lib.expo) lib.expo = load(lib, whom);
+            if (!lib.expo) lib.expo = load(lib, key);
             //instantiate direct or with injected dependencies
             if (!lib.expo.deps) mod.inst = lib.expo();
             else mod.inst = injectSync(lib);
@@ -82,13 +82,14 @@ module.exports = function createDI () {
         return expo.apply(null, args);
     }
 
-    function load(lib, whom) {
+    function load(lib, key) {
         try {
             //exports service factory
             return require(path.join(cwd, lib.path));
         }
         catch (err) {
-            throw new Error(`Can't load module from path: ${lib.path} for ${whom}!!`);
+            console.error('Loading error:', err);
+            throw new Error(`Can't load ${key} module from path: ${lib.path} !!`);
         };
     }
 

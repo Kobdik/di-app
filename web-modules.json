@@ -1,0 +1,12 @@
+{
+    "app": { "path": "./express-app" },
+    "config": { "path": "./config" },
+    "logger": { "path": "./logger" },
+    "ws_server": { "path": "./ws-server" },
+    "bson_pump": { "path": "./db/bson-pump-fit" },
+    "mongo_gate": { "path": "./db/mongo-gate" },
+    "collection": { "path": "./db/find-collection" },
+    "stream_router": { "path": "./routes/stream-router" },
+    "rare_router": { "path": "./routes/rare-router" },
+    "routes": { "path": "./routes" }
+}

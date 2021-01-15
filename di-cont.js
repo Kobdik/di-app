@@ -20,7 +20,7 @@ module.exports = function createDI () {
             //obtain module.exports service factory
             if (!lib.expo) {
                 console.info(`Loading factory for ${key} from path: ${lib.path}`);
-                lib.expo = load(lib, whom);
+                lib.expo = load(lib, key);
                 process.nextTick(console.info, `Next tick after loading ${key}`)
             }
             //instantiate direct or with injected dependencies
@@ -43,7 +43,7 @@ module.exports = function createDI () {
             if (!lib) throw new Error(`Can't read ${key} module description for ${whom} !!`);
             if (!lib.expo) {
                 console.info(`Loading factory for ${key} from path: ${lib.path}`);
-                lib.expo = load(lib, whom);
+                lib.expo = load(lib, key);
             }
             //instantiate direct or with injected dependencies
             if (!lib.expo.deps) mod.inst = lib.expo();

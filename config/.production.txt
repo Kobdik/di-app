@@ -1,0 +1,2 @@
+HOST=example.ru
+PORT=8080

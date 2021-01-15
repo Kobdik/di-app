@@ -12,8 +12,8 @@ module.exports = () => {
     ),
     transports: [
       new transports.Console(),
-      //new transports.File({ filename: 'logger/error.log', level: 'error' }),
-      //new transports.File({ filename: 'logger/common.log' }),
+      new transports.File({ filename: 'logger/error.log', level: 'error' }),
+      new transports.File({ filename: 'logger/common.log' }),
     ],
   });
 }
