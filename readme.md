@@ -9,6 +9,7 @@ Laconic Asynchronous Dependency Injection container for JavaScript
 + **Lifetime Management**: Singleton, Transient and Scoped lifetime
 
 Imagine a web server that has dozens of services. If its startup speed is critical, then asynchronous **Lazy Loading** of services solves that problem. It will allow the application to launch faster, with the minimal count of necessary services. Even while loading dependencies graph the server stays still responsive.
+[Lazy loading Express middleware](https://github.com/Kobdik/di-app/middleware.md)
 
 ## Table of contents
 
@@ -511,4 +512,4 @@ DI-Async loads service modules in an asynchronous manner only when needed, there
 
 Container implementation allows concurrently load the same *Singleton* dependency. In example program *concurrent.js*, shown above, there are three implicit and one explicit concurrent requests to *storage* dependency. Only first request loads factory and create service instance within method *get*, the other three awaits the same promise, that will return resolved instance.
 
-[See examples and the source code on GitHub](https://github.com/Kobdik/di-app).
+[Lazy loading Express middleware](https://github.com/Kobdik/di-app/middleware.md)

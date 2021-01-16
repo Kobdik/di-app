@@ -1,20 +1,19 @@
 const WebSocket = require('ws');
 //const MAX_CAP = 128*1024;
 
-// "collection" map to find_collection
 module.exports = (config, http_server, find_collection, logger) => {
     const wss = new WebSocket.Server({
         server: http_server,
         path: '/gate',
-        maxPayload: +config.MAX_CAP
+        maxPayload: 1024*1024
     });
-
-    wss.on('connection', function(ws) {
+    wss.on('connection', function(ws, request) {
         const stream = WebSocket.createWebSocketStream(ws, {
             writableHighWaterMark: +config.MAX_CAP,
             readable: false,
             writable: true 
         });
+        //console.info(JSON.stringify(stream));
         ws.on('message', (data) => {
             const message = JSON.parse(data);
             const { qry, cname, cnt } = message;
@@ -41,7 +40,7 @@ module.exports = (config, http_server, find_collection, logger) => {
 };
 
 module.exports.sname = "web-socket server";
-module.exports.deps = [ "config", "http_server", "collection", "logger" ];
+module.exports.deps = [ "config", "http_server", "find_collection", "logger" ];
 
 // works little faster than pipe
 function pump(cursor, stream, cb) {

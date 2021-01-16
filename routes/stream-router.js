@@ -1,7 +1,6 @@
 const express = require('express');
 const JSONStream = require('JSONStream');
 
-// dependency name is "collection"
 module.exports = (find_collection) => {
 
     const router = express.Router();
@@ -15,7 +14,8 @@ module.exports = (find_collection) => {
             w: 0,
             raw: true, // data as BSON
             strict: true
-        }).then(coll => coll
+        }).then(collection =>
+            collection
             .find({}, { skip: 0, limit: cnt })
             .pipe(res)
         );
@@ -30,7 +30,8 @@ module.exports = (find_collection) => {
             w: 0,
             raw: false, //data as JSON
             strict: true
-        }).then(coll => coll
+        }).then(collection =>
+            collection
             .find({}, { skip: 0, limit: cnt })
             .pipe(JSONStream.stringify('[', ',', ']'))
             .pipe(res)
@@ -45,4 +46,4 @@ module.exports = (find_collection) => {
 }
 
 module.exports.sname = "stream-router";
-module.exports.deps = [ "collection" ];
+module.exports.deps = [ "find_collection" ];

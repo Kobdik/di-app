@@ -5,8 +5,8 @@
     "ws_server": { "path": "./ws-server" },
     "bson_pump": { "path": "./db/bson-pump-fit" },
     "mongo_gate": { "path": "./db/mongo-gate" },
-    "collection": { "path": "./db/find-collection" },
-    "stream_router": { "path": "./routes/stream-router" },
+    "find_collection": { "path": "./db/find-collection" },
+    "lazy_mount": { "path": "./routes/lazy-mount" },
     "rare_router": { "path": "./routes/rare-router" },
-    "routes": { "path": "./routes" }
+    "stream_router": { "path": "./routes/stream-router" }
 }

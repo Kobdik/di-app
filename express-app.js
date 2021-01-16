@@ -1,22 +1,21 @@
 
 const express = require('express');
 
-module.exports = (routes) => {
+module.exports = (lazy_mount, logger) => {
     const app = express();
     app.get('/', (_req, res) => res.end('Hello!'));
-    //bson or json stream
-    app.use('/stream', routes.stream_router);
-    //some rarely used routes
-    routes.mount(app, '/rare1', 'rare_router');
-    routes.mount(app, '/rare2', 'rare_router');
-        
+    // bson or json stream from mongodb cursor
+    lazy_mount(app, '/stream', 'stream_router');
+    // some rarely used router
+    lazy_mount(app, '/rare', 'rare_router');
+    
     app.use((error, req, res, next) => {
-        console.error('Log error:', error);
+        logger.error('Log error:', error);
         next(error);
     });
     
     app.use((error, req, res, next) => {
-        console.error('Handled url:', req.url);
+        logger.error('Handled url:', req.url);
         res.status(500).send('Something broken!');
         next(error);
     });
@@ -25,4 +24,4 @@ module.exports = (routes) => {
 }
 
 module.exports.sname = "express-app";
-module.exports.deps = ["routes"];
+module.exports.deps = [ "lazy_mount", "logger" ];

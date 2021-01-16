@@ -12,7 +12,7 @@ const runWS = async () => {
     const pump = await di.get('bson_pump');
     const config = await di.get('config');
     const rows = [];
-    let counter = 0, fst = 0;
+    let counter = 0, fst = 0, lst = 0;
     const ws = new WebSocket(`ws://${config.HOST}:${config.PORT}/gate`);
     ws.on('open', function open() {
         const duplex = WebSocket.createWebSocketStream(ws, {
@@ -23,7 +23,8 @@ const runWS = async () => {
         //prepare to read
         pump(duplex, rows, (cnt, size, end) => {
             if (end) {
-                console.log(hooks.performance.now() - fst, '-ms for bson over websockets');
+                lst = hooks.performance.now();
+                console.log(lst - fst, '-ms for bson over websockets');
                 console.log(cnt, 'rows', size, 'bytes');
             }
             else {
@@ -32,7 +33,7 @@ const runWS = async () => {
             }
         });
         //send query to lots collection
-        duplex.write(JSON.stringify({ qry: 1, cname: 'lots', cnt: 20000 }));
+        duplex.write(JSON.stringify({ qry: 1, cname: 'lots', cnt: 2000 }));
         fst = hooks.performance.now();
     });
 };
@@ -52,7 +53,8 @@ const runBson = async () => {
         //res.on('readable', cnt => (cnt) ? console.log(cnt) : null);
         pump(res, rows, (cnt, size, end) => {
             if (end) {
-                console.log(hooks.performance.now() - fst, '-ms for bson over http');
+                lst = hooks.performance.now();
+                console.log(lst - fst, '-ms for bson over http');
                 console.log(cnt, 'rows', size, 'bytes');
             }
             else {
@@ -86,7 +88,8 @@ const runJson = async () => {
             cnt++;
         })
         .on('end', () => {
-            console.log(hooks.performance.now() - fst, '-ms for json over http');
+            lst = hooks.performance.now();
+            console.log(lst - fst, '-ms for json over http');
             console.log(cnt, 'rows');
         });
     });
