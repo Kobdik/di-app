@@ -8,7 +8,7 @@ For example, there are *rare_router* service, that still not loaded. The middlew
 // fragment from express-app.js
 const express = require('express');
 
-module.exports = (lazy_mount) => {
+module.exports = (lazy_mount, logger) => {
     const app = express();
     app.get('/', (_req, res) => res.end('Hello!'));
 
@@ -87,3 +87,6 @@ info: rare requested with id=2
 
 info: HTTP Server closed by timeout
 ```
+
+Later I will explain how to work with BSON stream, obtained from MongoDB cursor stream. Compared to JSON stream it works 3 times faster. There are examples for the impatiens.
+See *client.js*, *bson-pump-fit.js* and *stream-router.js*

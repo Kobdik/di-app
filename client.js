@@ -3,7 +3,7 @@ const hooks = require('perf_hooks');
 const http = require('http');
 const WebSocket = require('ws');
 const JSONStream = require('JSONStream');
-const DI = require('./di-async');
+const DI = require('di-async');
 const di = DI();
 di.join(require('./web-modules.json'));
 di.set('logger', console );
