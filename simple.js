@@ -1,4 +1,4 @@
-const DI = require('./di-async');
+const DI = require('di-async');
 const di = DI();
 di.join(require('./modules.json'));
 di.set('logger', console );
